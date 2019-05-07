@@ -26,24 +26,19 @@
                         lazy-validation
                         style="width: 100%"
                     >
-                      <v-radio-group v-model="host">
+                      <v-radio-group v-model="env">
                         <v-radio
                           label="Test"
-                          value="https://test.bitgo.com"
+                          value="test"
                         ></v-radio>
                         <v-radio
                           label="Live"
-                          value="https://www.bitgo.com"
+                          value="prod"
                         ></v-radio>
                       </v-radio-group>
                       <v-text-field
-                              v-model="user"
-                              label="User(Email)"
-                              required
-                      ></v-text-field>
-                      <v-text-field
-                              v-model="password"
-                              label="Password"
+                              v-model="accessToken"
+                              label="Access Token"
                               required
                       ></v-text-field>
                       <v-text-field
@@ -77,12 +72,11 @@
                 <v-layout>
                   <v-flex xs12>
                     <v-card-title primary-title>
-                      <div>
+                      <div style="width: 100%">
                         <v-toolbar flat color="white">
                           <v-toolbar-title>CSV for Airdrop</v-toolbar-title>
                           <v-spacer></v-spacer>
-                          <!--<vue-csv-import v-model="parseCsv" :map-fields="[field1: 'Label 1', field2: 'Label 2']"></vue-csv-import>-->
-                          <input ref="csv" type="file" name="csv">
+                          <input ref="csv" type="file" name="csv" />
                           <v-btn dark @click.prevent="importCSV">
                             Import CSV
                           </v-btn>
@@ -96,6 +90,7 @@
                           <template v-slot:items="props">
                             <tr>
                               <td>{{ props.item.address }}</td>
+                              <td>{{ props.item.memo }}</td>
                               <td class="text-xs-right">{{ props.item.amount }}</td>
                             </tr>
                           </template>
@@ -107,6 +102,18 @@
                     </v-card-actions>
                   </v-flex>
                 </v-layout>
+              </v-card>
+            </v-flex>
+            <v-flex xs12>
+              <v-card>
+                <v-card-title><h4>Result</h4></v-card-title>
+                <v-divider></v-divider>
+                <v-list dense>
+                  <v-list-tile v-for="item in resultList">
+                    <v-list-tile-content>[{{item.status}}]  {{item.address}}</v-list-tile-content>
+                    <v-list-tile-content class="align-end">{{item.amount}}</v-list-tile-content>
+                  </v-list-tile>
+                </v-list>
               </v-card>
             </v-flex>
           </v-layout>
@@ -121,6 +128,7 @@ import _ from 'lodash';
 import Papa from 'papaparse';
 import rp from 'request-promise';
 
+
 export default {
   name: 'App',
   components: {
@@ -128,9 +136,8 @@ export default {
   data () {
     return {
       valid: true,
-      host: 'https://test.bitgo.com',
-      user: '',
-      password: '',
+      env: 'test',
+      accessToken: 'v2x275c2a2b5969640ae24e698192bf4fedc9a03554e161cbc6cea1812caec3a0e1',
       otp: '000000',
       walletId: '5cc5a5d4d5a49b7f03e1ef7833ab0a79',
       walletPassphrase: 'dkahsem!234',
@@ -143,12 +150,14 @@ export default {
           sortable: false,
           value: 'address'
         },
+        { text: 'Memo', value: 'memo', sortable: false },
         { text: 'Amount', value: 'amount', sortable: false },
       ],
       pagination: {
         rowsPerPage: -1
       },
-      sendList: []
+      sendList: [],
+      resultList: [],
     }
   },
   methods: {
@@ -157,48 +166,56 @@ export default {
         this.snackbar = true
       }
     },
-    sendAll() {
+    async sendAll() {
       console.log(this);
-
       if(this.sendList.length === 0){
         alert('No data.');
         return;
       }
-      if(this.host == ''){
-        alert('Host(Test or Live) is required.');
+      if(this.env == ''){
+        alert('Test or Live is required.');
         return;
       }
       if(this.walletId == '' ){
         alert('Wallet ID is required.');
         return;
       }
+      if(this.otp == '' ){
+        alert('OTP is required.');
+        return;
+      }
+      if(this.symbol == '' ){
+        alert('Symbol is required.');
+        return;
+      }
+      if(this.accessToken == '' ){
+        alert('Access Token is required.');
+        return;
+      }
 
-      const recipients = {};
+      this.resultList = [];
+      const recipients = [];
       this.sendList.forEach(data => {
-        recipients[data.address] = data.amount * 1e8;
+        recipients.push({
+          address: data.address,
+          amount: data.amount
+        });
       })
 
-      rp({
-        uri: `${this.host}/api/v2/${this.symbol}/wallet/${this.walletId}/sendmany`,
+      const result = await rp({
+        uri: `http://localhost:8081/api/sends`,
         method: 'POST',
-        headers: {
-          Authorization: 'Bearer v2x275c2a2b5969640ae24e698192bf4fedc9a03554e161cbc6cea1812caec3a0e1 ',
-        },
         body: {
           recipients,
           otp: this.otp,
+          symbol: this.symbol,
+          walletId: this.walletId,
           walletPassphrase: this.walletPassphrase,
+          accessToken: this.accessToken,
         },
         json: true
       })
-
-      /*
-      bitgo.wallets().get({
-        id: this.walletId
-      }, function(err, wallet) {
-          console.log(wallet);
-      });
-      */
+      this.resultList = result;
     },
     importCSV() {
       const _this = this;
@@ -210,7 +227,8 @@ export default {
           _this.csv.forEach(data => {
             _this.sendList.push({
               address: data[0],
-              amount: data[1]
+              memo: data[1],
+              amount: data[2],
             })
           })
         }

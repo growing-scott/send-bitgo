@@ -10,6 +10,10 @@
   "dependencies": {
     "bitgo": "^5.1.1",
     "core-js": "^2.6.5",
+    "dns": "^0.2.2",
+    "koa": "^2.7.0",
+    "koa-bodyparser": "^4.2.1",
+    "koa-router": "^7.4.0",
     "lodash": "^4.17.11",
     "papaparse": "^4.6.3",
     "request": "^2.88.0",
