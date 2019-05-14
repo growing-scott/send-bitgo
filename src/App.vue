@@ -202,20 +202,24 @@ export default {
         });
       })
 
-      const result = await rp({
-        uri: `http://localhost:8081/api/sends`,
-        method: 'POST',
-        body: {
-          recipients,
-          otp: this.otp,
-          symbol: this.symbol,
-          walletId: this.walletId,
-          walletPassphrase: this.walletPassphrase,
-          accessToken: this.accessToken,
-        },
-        json: true
-      })
-      this.resultList = result;
+      for(let i = 0; i < this.sendList.length; i++) {
+        const recipient = this.sendList[i];
+        const result = await rp({
+          uri: `http://192.168.0.155:8080//api/sends`,
+          method: 'POST',
+          body: {
+            env: this.env,
+            recipient,
+            otp: this.otp,
+            symbol: this.symbol,
+            walletId: this.walletId,
+            walletPassphrase: this.walletPassphrase,
+            accessToken: this.accessToken,
+          },
+          json: true
+        })
+        this.resultList.push(result);
+      }
     },
     importCSV() {
       const _this = this;

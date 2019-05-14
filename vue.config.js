@@ -6,7 +6,7 @@ module.exports = {
     https: false,
     proxy: {
       "/api/": {
-        target: "http://localhost:3000",
+        target: "http://192.168.0.155:3000",
         logLevel: 'debug'
       },
     }
