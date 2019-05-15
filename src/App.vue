@@ -210,11 +210,11 @@ export default {
           body: {
             env: this.env,
             recipient,
-            otp: this.otp,
-            symbol: this.symbol,
-            walletId: this.walletId,
-            walletPassphrase: this.walletPassphrase,
-            accessToken: this.accessToken,
+            otp: this.otp.trim(),
+            symbol: this.symbol.trim(),
+            walletId: this.walletId.trim(),
+            walletPassphrase: this.walletPassphrase.trim(),
+            accessToken: this.accessToken.trim(),
           },
           json: true
         })
@@ -230,9 +230,9 @@ export default {
         if(_this.csv){
           _this.csv.forEach(data => {
             _this.sendList.push({
-              address: data[0],
-              memo: data[1],
-              amount: data[2],
+              address: data[0].trim(),
+              memo: data[1].trim(),
+              amount: data[2].trim(),
             })
           })
         }

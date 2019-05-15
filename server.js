@@ -22,19 +22,18 @@ router.post('/api/sends', async ctx => {
     const body = ctx.request.body;
 
     const coin = body.symbol;
-
-    const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
-    const basecoin = bitgo.coin(coin);
-    const walletInstance = await basecoin.wallets().get({ id: body.walletId });
-
-    await bitgo.unlock({ otp: body.otp })
     try{
+        const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
+        const basecoin = bitgo.coin(coin);
+        const walletInstance = await basecoin.wallets().get({ id: body.walletId });
+
+        await bitgo.lock({});
+        await bitgo.unlock({ otp: body.otp })
+
         const transaction = await walletInstance.sendMany({
           recipients: [body.recipient],
           walletPassphrase: body.walletPassphrase
         });
-
-        console.log(transaction);
 
         console.log('Wallet ID:', walletInstance.id());
         console.log('Current Receive Address:', body.recipient.address);
@@ -45,19 +44,19 @@ router.post('/api/sends', async ctx => {
         status: transaction.status,
       };
     }catch(e){
-        console.log(e);
+        console.log('Error', e);
         if(e.result) {
-          ctx.body = {
-            address: body.recipient.address,
-            amount: body.recipient.amount,
-            status: e.result.status,
-          };
-        }else{
+          if(e.result.error){
+            ctx.throw(401, e.result.error);
+          }else{
             ctx.body = {
               address: body.recipient.address,
               amount: body.recipient.amount,
-              status: 'Unknown server error.',
+              status: e.result.status,
             };
+          }
+        }else{
+            ctx.throw(401, e);
         }
     }
 })
@@ -66,7 +65,6 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 app.use(async ctx => {
-    console.log('---------', ctx.request.body)
     ctx.body = ctx.request.body;
 });
 
