@@ -205,7 +205,7 @@ export default {
       for(let i = 0; i < this.sendList.length; i++) {
         const recipient = this.sendList[i];
         const result = await rp({
-          uri: `http://192.168.0.123:8080//api/sends`,
+          uri: `http://192.168.0.123:8080/api/sends`,
           method: 'POST',
           body: {
             env: this.env,
