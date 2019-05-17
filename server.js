@@ -23,12 +23,18 @@ router.post('/api/sends', async ctx => {
 
     const coin = body.symbol;
     try{
+        if(body.env === 'prod') {
+            body.recipient.amount = String(Number(body.recipient.amount) * 1e18);
+        }
+
         const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
         const basecoin = bitgo.coin(coin);
         const walletInstance = await basecoin.wallets().get({ id: body.walletId });
 
         await bitgo.lock({});
         await bitgo.unlock({ otp: body.otp })
+
+
 
         const transaction = await walletInstance.sendMany({
           recipients: [body.recipient],
