@@ -14,8 +14,43 @@ router.get('/', (ctx, next) => {
     ctx.body = 'Hello'
 })
 
+router.post('/api/lock', async ctx => {
+  const body = ctx.request.body;
+  try{
+    const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
+    const response = await bitgo.lock({});
+    ctx.body = response;
+  }catch(e){
+    console.log('Error', e);
+    if(e.result) {
+      if(e.result.error){
+        ctx.throw(401, e.result.error);
+      }
+    }else{
+      ctx.throw(401, e);
+    }
+  }
+})
+
+router.post('/api/unlock', async ctx => {
+  const body = ctx.request.body;
+  try{
+    const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
+    const response = await bitgo.unlock({ otp: body.otp, duration: body.duration })
+    ctx.body = response;
+  }catch(e){
+    console.log('Error', e);
+    if(e.result) {
+      if(e.result.error){
+        ctx.throw(401, e.result.error);
+      }
+    }else{
+      ctx.throw(401, e);
+    }
+  }
+})
+
 router.post('/api/sends', async ctx => {
-    console.log(ctx.request.body);
     const result = [];
 
     //ctx.body = 'Hello'
@@ -30,11 +65,6 @@ router.post('/api/sends', async ctx => {
         const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
         const basecoin = bitgo.coin(coin);
         const walletInstance = await basecoin.wallets().get({ id: body.walletId });
-
-        await bitgo.lock({});
-        await bitgo.unlock({ otp: body.otp })
-
-
 
         const transaction = await walletInstance.sendMany({
           recipients: [body.recipient],
