@@ -50,6 +50,52 @@ router.post('/api/unlock', async ctx => {
   }
 })
 
+router.post('/api/address', async ctx => {
+  const body = ctx.request.body;
+  try{
+    const coin = body.symbol;
+    const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
+    const basecoin = bitgo.coin(coin);
+    const walletInstance = await basecoin.wallets().get({ id: body.walletId });
+    const response = await walletInstance.createAddress({});
+    ctx.body = response;
+  }catch(e){
+    console.log('Error', e);
+    if(e.result) {
+      if(e.result.error){
+        ctx.throw(401, e.result.error);
+      }
+    }else{
+      ctx.throw(401, e);
+    }
+  }
+})
+
+router.post('/api/webhook', async ctx => {
+  const body = ctx.request.body;
+  try{
+    const coin = body.symbol;
+    const bitgo = new BitGoJS.BitGo({ env: body.env, accessToken: body.accessToken });
+    const basecoin = bitgo.coin(coin);
+    const walletInstance = await basecoin.wallets().get({ id: body.walletId });
+    const response = await walletInstance.addWebhook({
+      url: body.webhookUrl,
+      type: body.webhookType,
+      allToken: true,
+    });
+    ctx.body = response;
+  }catch(e){
+    console.log('Error', e);
+    if(e.result) {
+      if(e.result.error){
+        ctx.throw(401, e.result.error);
+      }
+    }else{
+      ctx.throw(401, e);
+    }
+  }
+})
+
 router.post('/api/sends', async ctx => {
     const result = [];
 

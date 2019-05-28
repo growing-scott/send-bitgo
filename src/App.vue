@@ -89,14 +89,16 @@
                               label="Wallet Id"
                               required
                       ></v-text-field>
-
                       <v-text-field
-                              v-model="walletPassphrase "
+                              v-model="walletPassphrase"
                               label="Wallet Passphrase"
                               required
                       ></v-text-field>
                     </v-form>
                 </v-card-title>
+                <v-card-actions>
+                  <v-btn color="#40b5bb" @click="createAddress()">New Address</v-btn>
+                </v-card-actions>
               </v-card>
             </v-flex>
             <v-flex xs12>
@@ -148,6 +150,35 @@
                 </v-list>
               </v-card>
             </v-flex>
+            <v-flex xs12>
+              <v-card>
+                <v-card-title primary-title>
+                  <h2>
+                    Webhook
+                  </h2>
+                  <v-form
+                      ref="form"
+                      v-model="valid"
+                      lazy-validation
+                      style="width: 100%"
+                  >
+                    <v-text-field
+                            v-model="webhookUrl"
+                            label="Webhook URL"
+                            required
+                    ></v-text-field>
+                    <v-select
+                            v-model="webhookType"
+                            :items="webhookTypes"
+                            label="Standard"
+                    ></v-select>
+                  </v-form>
+                </v-card-title>
+                <v-card-actions>
+                  <v-btn color="#56ca8f" @click="addWalletWebhook()">Add wallet webhook</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-flex>
           </v-layout>
         </v-container>
       </v-card>
@@ -176,6 +207,9 @@ export default {
       walletId: '5cc5a5d4d5a49b7f03e1ef7833ab0a79',
       walletPassphrase: 'dkahsem!234',
       symbol: 'terc',
+      webhookUrl: 'http://ci.amond.cc:3000/bitgo/webhook/address',
+      webhookType: '',
+      webhookTypes: ['transfer', 'transaction', 'pendingapproval', 'address_confirmation'],
       duration: 600,
       cvs: null,
       sessionUnlock: false,
@@ -309,6 +343,56 @@ export default {
         this.sessionUnlock = false;
         alert(result);
       }
+    },
+    async createAddress() {
+      if(this.walletId == '' ){
+        alert('Wallet ID is required.');
+        return;
+      }
+
+      const result = await rp({
+        uri: `${process.env.VUE_APP_API_ENDPOINT}/api/address`,
+        method: 'POST',
+        body: {
+          env: this.env,
+          symbol: this.symbol.trim(),
+          walletId: this.walletId.trim(),
+          accessToken: this.accessToken.trim(),
+        },
+        json: true
+      })
+      alert(result.id);
+    },
+    async addWalletWebhook() {
+      if(this.walletId == '' ){
+        alert('Wallet ID is required.');
+        return;
+      }
+
+      if(this.webhookUrl == '' ){
+        alert('Webhook URL is required.');
+        return;
+      }
+
+      if(this.webhookType == '' ){
+        alert('Webhook Type is required.');
+        return;
+      }
+
+      const result = await rp({
+        uri: `${process.env.VUE_APP_API_ENDPOINT}/api/webhook`,
+        method: 'POST',
+        body: {
+          env: this.env,
+          symbol: this.symbol.trim(),
+          walletId: this.walletId.trim(),
+          accessToken: this.accessToken.trim(),
+          webhookUrl: this.webhookUrl.trim(),
+          webhookType: this.webhookType.trim(),
+        },
+        json: true
+      })
+      alert(result.id);
     },
     importCSV() {
       const _this = this;
